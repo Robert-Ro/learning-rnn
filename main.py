@@ -13,14 +13,15 @@ import torch
 
 # 加载已训练的模型
 model = RNN(input_size, hidden_size, num_layers, num_classes)
-model.load_state_dict(torch.load("rnn_model.pth", map_location=device))
-model.eval()  # 设置模型为评估模式
-model.to(device)
+# model.load_state_dict(torch.load("rnn_model.pth", map_location=device))
+model.load_state_dict(torch.load("rnn_model_demo1.pth", map_location=device))
+model.eval()
+# model.to(device)
 
 
 # 读取待识别的图像
 image_path = "./temp/training/7/38.png"
-# image_path = "./test/4/4.png" 白底黑字，识别不了
+image_path = "./test/4/4.png"  # 白底黑字，识别不了
 image_path = "./test/3/1.png"
 
 image = Image.open(image_path)
