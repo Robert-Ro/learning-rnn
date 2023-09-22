@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms
+import os
+import cv2
 
 # 超参数
 sequence_length = 28
@@ -39,3 +41,21 @@ class RNN(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
+
+
+def pre_handle(image):
+    """_summary_
+    图片背景/内容颜色反转
+    Args:
+        image (string): 待处理的图片路径
+
+    Returns:
+        string: 处理好的图片路径
+    """
+    [name, extension] = os.path.basename(image).split(".")
+    file_path = os.path.dirname(image)
+    image = cv2.imread(image)
+    inverted_image = cv2.bitwise_not(image)
+    new_image = f"{file_path}/{name}_inverted.{extension}"
+    cv2.imwrite(new_image, inverted_image)
+    return new_image

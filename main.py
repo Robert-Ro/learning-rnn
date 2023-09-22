@@ -8,21 +8,31 @@ from util import (
     num_layers,
     num_classes,
     device,
+    pre_handle,
 )
 import torch
 
+
 # 加载已训练的模型
 model = RNN(input_size, hidden_size, num_layers, num_classes)
-# model.load_state_dict(torch.load("rnn_model.pth", map_location=device))
-model.load_state_dict(torch.load("rnn_model_demo1.pth", map_location=device))
+model.load_state_dict(torch.load("rnn_model.pth", map_location=device))
+# model.load_state_dict(torch.load("rnn_model_demo1.pth", map_location=device))
 model.eval()
-# model.to(device)
+model.to(device)
 
 
 # 读取待识别的图像
 image_path = "./temp/training/7/38.png"
-image_path = "./test/4/4.png"  # 白底黑字，识别不了
-image_path = "./test/3/1.png"
+# image_path = "./test/3/1.png"
+
+# image_path = "./test/4/4.png"  # 白底黑字，识别不了
+# image_path = pre_handle(image_path)
+# print(image_path)
+
+image_path = "./test/6/1.png"  # 白底黑字，识别不了
+image_path = pre_handle(image_path)
+print(image_path)
+
 
 image = Image.open(image_path)
 image = transform(image)
