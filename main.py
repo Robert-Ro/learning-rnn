@@ -1,81 +1,41 @@
+from PIL import Image
+from util import (
+    transform,
+    RNN,
+    sequence_length,
+    input_size,
+    hidden_size,
+    num_layers,
+    num_classes,
+    device,
+)
 import torch
 
-from torchvision import datasets, transforms
-from util import RNN, device
-
-# Hyper parameters
-learning_rate = 0.001
-sequence_length = 28
-hidden_size = 128
-num_classes = 10
-batch_size = 64
-input_size = 28
-num_layers = 2
-num_epochs = 3
-
-train_dataset = datasets.MNIST(
-    root="./data/training", train=True, transform=transforms.ToTensor(), download=True
-)
-test_dataset = datasets.MNIST(
-    root="./data/testing", train=False, transform=transforms.ToTensor(), download=True
-)
-
-train_loader = torch.utils.data.DataLoader(
-    dataset=train_dataset, batch_size=batch_size, shuffle=True
-)
-test_loader = torch.utils.data.DataLoader(
-    dataset=test_dataset, batch_size=batch_size, shuffle=False
-)
-
-
+# 加载已训练的模型
 model = RNN(input_size, hidden_size, num_layers, num_classes)
-to_device(model, device)
+model.load_state_dict(torch.load("rnn_model.pth", map_location=device))
+model.eval()  # 设置模型为评估模式
+model.to(device)
 
 
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+# 读取待识别的图像
+image_path = "./temp/training/7/38.png"
+# image_path = "./test/4/4.png" 白底黑字，识别不了
+image_path = "./test/3/1.png"
 
+image = Image.open(image_path)
+image = transform(image)
 
-# Train the model
-total_step = len(train_loader)
-for epoch in range(num_epochs):
-    for i, (images, labels) in enumerate(train_loader):
-        images = images.reshape(-1, sequence_length, input_size).to(device)
-        labels = labels.to(device)
+# 添加批次维度（模型通常接受批次作为输入）
+image = image.unsqueeze(0)
+image = image.to(device)
 
-        # Forward pass
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-
-        # Backward pass and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if (i + 1) % 100 == 0:
-            print(
-                "Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}".format(
-                    epoch + 1, num_epochs, i + 1, total_step, loss.item()
-                )
-            )
-
-
-# Evaluate the model
-model.eval()
+# 使用模型进行推断
 with torch.no_grad():
-    right = 0
-    total = 0
-    for images, labels in test_loader:
-        images = images.reshape(-1, sequence_length, input_size).to(device)
-        labels = labels.to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        right += (predicted == labels).sum().item()
-print(
-    "Test Accuracy of the model on the 10000 test images: {} %".format(
-        100 * right / total
-    )
-)
+    output = model(image.view(1, sequence_length, input_size))
 
-torch.save(model.state_dict(), "rnn_model.pth")
+# 获取预测结果
+_, predicted = torch.max(output, 1)
+predicted_digit = predicted.item()
+
+print(f"Predicted Digit: {predicted_digit}")
